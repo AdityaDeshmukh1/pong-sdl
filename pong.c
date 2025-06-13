@@ -87,6 +87,55 @@ void render(Paddle *p1, Paddle *p2, Ball *ball) {
   SDL_RenderPresent(renderer);
 }
 
+void handleEvents(bool *quit, Paddle *p1, Paddle *p2) {
+  SDL_Event e;
+  while (SDL_PollEvent(&e)) {
+    if (e.type == SDL_QUIT)
+      *quit = true;
+  }
+
+  const Uint8* state = SDL_GetKeyboardState(NULL);
+
+  // Player 1 controls
+  if (state[SDL_SCANCODE_W] && p1->y > 0)
+    p1->y -= PADDLE_SPEED; 
+
+  if (state[SDL_SCANCODE_S] && p1->y < SCREEN_HEIGHT - PADDLE_HEIGHT) 
+    p1->y += PADDLE_SPEED;
+
+  if (state[SDL_SCANCODE_UP] && p2->y > 0)
+    p2->y -= PADDLE_SPEED; 
+
+  if (state[SDL_SCANCODE_DOWN] && p2->y < SCREEN_HEIGHT - PADDLE_HEIGHT) 
+    p2->y += PADDLE_SPEED;
+}
+
+void update(Paddle *p1, Paddle *p2, Ball *ball) {
+
+  ball->x += ball->velX;
+  ball->y += ball->velY;
+
+  // Bounce off top and bottom walls
+  if (ball->y <= 0 || ball->y + BALL_SIZE >= SCREEN_HEIGHT)
+    ball->velY = -ball->velY;
+
+  // Bounce off paddles
+  SDL_Rect ballRect = {ball->x, ball->y, ball->w, ball->h};
+  SDL_Rect p1Rect = {p1->x, p1->y, p1->w, p1->h};
+  SDL_Rect p2Rect = {p2->x, p2->y, p2->w, p2->h};
+
+  if (SDL_HasIntersection(&ballRect, &p1Rect) || 
+     SDL_HasIntersection(&ballRect, &p2Rect)) {
+    ball->velX = -ball->velX;
+  }
+
+  if (ball->x <= 0 || ball->x + BALL_SIZE >= SCREEN_WIDTH) {
+    ball->x = (SCREEN_WIDTH - BALL_SIZE) / 2;
+    ball->y = (SCREEN_HEIGHT - BALL_SIZE) / 2;
+    ball->velX = -ball->velX;
+  }
+}
+
 int main() {
   if (!init())
     return 1;
@@ -98,8 +147,12 @@ int main() {
   initGame(&p1, &p2, &ball);
 
   while (!quit) {
+    handleEvents(&quit, &p1, &p2);
+    update(&p1, &p2, &ball);
     render(&p1, &p2, &ball);
+    SDL_Delay(16);
   }
 
+  closeSDL();
   return 0;
 }
