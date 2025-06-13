@@ -50,3 +50,56 @@ void closeSDL() {
   SDL_DestroyWindow(window);
   SDL_Quit();
 }
+
+void initGame(Paddle *p1, Paddle *p2, Ball *ball) {
+  p1->x = 20;
+  p1->y = (SCREEN_HEIGHT - PADDLE_HEIGHT) / 2;
+  p1->w = PADDLE_WIDTH;
+  p1->h = PADDLE_HEIGHT;
+
+  p2->x = SCREEN_WIDTH - PADDLE_WIDTH - 20;
+  p2->y = (SCREEN_HEIGHT - PADDLE_HEIGHT) / 2;
+  p2->w = PADDLE_WIDTH;
+  p2->h = PADDLE_HEIGHT;
+
+  ball->x = (SCREEN_WIDTH - BALL_SIZE) / 2;
+  ball->y = (SCREEN_HEIGHT - BALL_SIZE) / 2;
+  ball->w = BALL_SIZE;
+  ball->h = BALL_SIZE;
+  ball->velX = BALL_SPEED;
+  ball->velY = BALL_SPEED;
+}
+
+void render(Paddle *p1, Paddle *p2, Ball *ball) {
+  SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+  SDL_RenderClear(renderer);
+
+  SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+
+  SDL_Rect p1Rect = {p1->x, p1->y, p1->w, p1->h};
+  SDL_Rect p2Rect = {p2->x, p2->y, p2->w, p2->h};
+  SDL_Rect ballRect = {ball->x, ball->y, ball->w, ball->h};
+
+  SDL_RenderFillRect(renderer, &p1Rect);
+  SDL_RenderFillRect(renderer, &p2Rect);
+  SDL_RenderFillRect(renderer, &ballRect);
+
+  SDL_RenderPresent(renderer);
+}
+
+int main() {
+  if (!init())
+    return 1;
+
+  Paddle p1, p2;
+  Ball ball;
+  bool quit  = false;
+
+  initGame(&p1, &p2, &ball);
+
+  while (!quit) {
+    render(&p1, &p2, &ball);
+  }
+
+  return 0;
+}
