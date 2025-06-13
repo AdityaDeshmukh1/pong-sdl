@@ -1,3 +1,4 @@
+#include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL.h>
 #include <stdbool.h>
 
@@ -20,11 +21,24 @@ typedef struct {
 
 SDL_Window *window = NULL;
 SDL_Renderer *renderer = NULL;
+TTF_Font *font = NULL;
+
 
 bool init() {
   if (SDL_Init(SDL_INIT_VIDEO) > 0) {
     printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
     return false;
+  }
+
+  if (TTF_Init() == -1) {
+    printf("Failed to initialize TTF: %s\n", TTF_GetError());
+    return 1;
+  }
+  
+  font = TTF_OpenFont("fonts/pixel_font.ttf", 28);
+  if (font == NULL) {
+    printf("Failed to retrieve font: %s\n", SDL_GetError());
+    return 1;
   }
 
   window = SDL_CreateWindow("Pong in C",
@@ -70,6 +84,18 @@ void initGame(Paddle *p1, Paddle *p2, Ball *ball) {
   ball->velY = BALL_SPEED;
 }
 
+void renderText(SDL_Renderer *renderer, TTF_Font *font, const char *message, int x, int y) {
+  SDL_Color textColor = {255, 255, 255};
+  SDL_Surface *textSurface = TTF_RenderText_Solid(font, message, textColor);
+  SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+
+  SDL_Rect textRect = {x, y, textSurface->w, textSurface->h};
+  SDL_RenderCopy(renderer, textTexture, NULL, &textRect);
+
+  SDL_FreeSurface(textSurface);
+  SDL_DestroyTexture(textTexture);
+}
+
 void render(Paddle *p1, Paddle *p2, Ball *ball) {
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
   SDL_RenderClear(renderer);
@@ -84,6 +110,7 @@ void render(Paddle *p1, Paddle *p2, Ball *ball) {
   SDL_RenderFillRect(renderer, &p2Rect);
   SDL_RenderFillRect(renderer, &ballRect);
 
+  renderText(renderer, font, "Hello World!", 20, 20);
   SDL_RenderPresent(renderer);
 }
 
@@ -135,6 +162,8 @@ void update(Paddle *p1, Paddle *p2, Ball *ball) {
     ball->velX = -ball->velX;
   }
 }
+
+
 
 int main() {
   if (!init())
