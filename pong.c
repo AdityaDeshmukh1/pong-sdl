@@ -84,8 +84,7 @@ void initGame(Paddle *p1, Paddle *p2, Ball *ball) {
   ball->velY = BALL_SPEED;
 }
 
-void renderText(SDL_Renderer *renderer, TTF_Font *font, const char *message, int x, int y) {
-  SDL_Color textColor = {255, 255, 255};
+void renderText(SDL_Renderer *renderer, TTF_Font *font, const char *message, int x, int y, SDL_Color textColor) {
   SDL_Surface *textSurface = TTF_RenderText_Solid(font, message, textColor);
   SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
 
@@ -96,7 +95,18 @@ void renderText(SDL_Renderer *renderer, TTF_Font *font, const char *message, int
   SDL_DestroyTexture(textTexture);
 }
 
-void render(Paddle *p1, Paddle *p2, Ball *ball) {
+void renderHUD(int scoreP1, int scoreP2) {
+  char scoreText[64];
+  SDL_Color white = {255, 255, 255};
+
+  sprintf(scoreText, "Player 1: %d", scoreP1);
+  renderText(renderer, font, scoreText, 20, 20, white);
+
+  sprintf(scoreText, "Player 2: %d", scoreP2);
+  renderText(renderer, font, scoreText, SCREEN_WIDTH - 200, 20, white);
+}
+
+void render(Paddle *p1, Paddle *p2, Ball *ball, int scoreP1, int scoreP2) {
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
   SDL_RenderClear(renderer);
 
@@ -110,7 +120,7 @@ void render(Paddle *p1, Paddle *p2, Ball *ball) {
   SDL_RenderFillRect(renderer, &p2Rect);
   SDL_RenderFillRect(renderer, &ballRect);
 
-  renderText(renderer, font, "Hello World!", 20, 20);
+  renderHUD(scoreP1, scoreP2);
   SDL_RenderPresent(renderer);
 }
 
@@ -137,7 +147,7 @@ void handleEvents(bool *quit, Paddle *p1, Paddle *p2) {
     p2->y += PADDLE_SPEED;
 }
 
-void update(Paddle *p1, Paddle *p2, Ball *ball) {
+void update(Paddle *p1, Paddle *p2, Ball *ball, int *scoreP1, int *scoreP2) {
 
   ball->x += ball->velX;
   ball->y += ball->velY;
@@ -156,14 +166,21 @@ void update(Paddle *p1, Paddle *p2, Ball *ball) {
     ball->velX = -ball->velX;
   }
 
-  if (ball->x <= 0 || ball->x + BALL_SIZE >= SCREEN_WIDTH) {
+  if (ball->x <= 0) {
+    (*scoreP2)++;
     ball->x = (SCREEN_WIDTH - BALL_SIZE) / 2;
     ball->y = (SCREEN_HEIGHT - BALL_SIZE) / 2;
     ball->velX = -ball->velX;
   }
+
+  else if (ball->x + BALL_SIZE >= SCREEN_WIDTH) {
+    (*scoreP1)++;
+    ball->x = (SCREEN_WIDTH - BALL_SIZE) / 2;
+    ball->y = (SCREEN_HEIGHT - BALL_SIZE) / 2;
+    ball->velX = -ball->velX;
+  }
+
 }
-
-
 
 int main() {
   if (!init())
@@ -172,13 +189,14 @@ int main() {
   Paddle p1, p2;
   Ball ball;
   bool quit  = false;
+  int scoreP1 = 0, scoreP2 = 0;
 
   initGame(&p1, &p2, &ball);
 
   while (!quit) {
     handleEvents(&quit, &p1, &p2);
-    update(&p1, &p2, &ball);
-    render(&p1, &p2, &ball);
+    update(&p1, &p2, &ball, &scoreP1, &scoreP2);
+    render(&p1, &p2, &ball, scoreP1, scoreP2);
     SDL_Delay(16);
   }
 
