@@ -6,6 +6,7 @@
 #include "include/game.h"
 #include "include/render.h"
 #include "include/input.h"
+#include "include/ai.h"
 
 int main() {
   if (!init())
@@ -21,6 +22,7 @@ int main() {
   while (!quit) {
     handleEvents(&quit, &p1, &p2);
     update(&p1, &p2, &ball, &scoreP1, &scoreP2);
+    updateAIPaddle(&p2, &ball);
     render(&p1, &p2, &ball, scoreP1, scoreP2);
     SDL_Delay(16);
   }
