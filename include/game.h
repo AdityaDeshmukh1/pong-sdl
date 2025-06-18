@@ -12,6 +12,12 @@
 #define PADDLE_SPEED 5
 #define BALL_SPEED 5
 
+typedef enum {
+  STATE_MENU,
+  STATE_PLAYING, 
+  STATE_QUIT
+} GameState;
+
 typedef struct {
   int x, y, w, h;
 } Paddle;
