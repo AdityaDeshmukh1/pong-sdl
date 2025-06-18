@@ -26,8 +26,9 @@ void renderMenu() {
 
   SDL_Color white = {255, 255, 255, 255};
   SDL_Color green = {0, 255, 0, 255};
+  int x = SCREEN_WIDTH / 2 - 100;
 
-  int y = 150;
+  int y = SCREEN_HEIGHT / 2 - 100;
   for (int i = 0; i < NUM_OPTIONS; i++) {
     SDL_Color color;
     if (selectedOption == i)
@@ -35,7 +36,7 @@ void renderMenu() {
     else 
       color = white;
 
-    renderMenuText(renderer, font, menuOptions[i].label, 200, y, color);
+    renderMenuText(renderer, font, menuOptions[i].label, x, y, color);
     y += 50;
   }
 
@@ -46,7 +47,7 @@ void handleMenuEvents(bool *quit, GameState *currentState) {
   SDL_Event e; 
   while (SDL_PollEvent(&e)) {
     if (e.type == SDL_QUIT)
-      *quit = false;
+      *quit = true;
 
     if (e.type == SDL_KEYDOWN) {
       switch (e.key.keysym.sym) {
