@@ -4,7 +4,8 @@
 
 
 MenuOption menuOptions[NUM_OPTIONS] = {
-  {"Start Game", STATE_PLAYING},
+  {"Single-Player", STATE_PLAYING_1P},
+  {"Two-Player", STATE_PLAYING_2P},
   {"Quit Game", STATE_QUIT}
 };
 

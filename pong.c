@@ -22,13 +22,18 @@ int main() {
   initGame(&p1, &p2, &ball);
 
   while (!quit) {
-<<<<<<< HEAD
     switch (currentState) {
       case STATE_MENU:
         handleMenuEvents(&quit, &currentState);
         renderMenu();
         break;
-      case STATE_PLAYING:
+      case STATE_PLAYING_1P:
+        updateAIPaddle(&p2, &ball);
+        handleEvents(&quit, &p1, &p2);
+        update(&p1, &p2, &ball, &scoreP1, &scoreP2);
+        render(&p1, &p2, &ball, scoreP1, scoreP2);
+        break;
+      case STATE_PLAYING_2P:
         handleEvents(&quit, &p1, &p2);
         update(&p1, &p2, &ball, &scoreP1, &scoreP2);
         render(&p1, &p2, &ball, scoreP1, scoreP2);
@@ -37,7 +42,9 @@ int main() {
         quit = 1;
         break;
     }
-
+    SDL_Delay(16);
+  }
   closeSDL();
   return 0;
+
 }

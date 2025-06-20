@@ -6,7 +6,7 @@
 #include "init.h"
 #include "game.h"
 
-#define NUM_OPTIONS 2
+#define NUM_OPTIONS 3
 
 typedef struct {
   const char *label;
