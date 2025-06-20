@@ -7,6 +7,7 @@
 #include "include/render.h"
 #include "include/input.h"
 #include "include/menu.h"
+#include "include/ai.h"
 
 int main() {
   if (!init())
@@ -21,6 +22,7 @@ int main() {
   initGame(&p1, &p2, &ball);
 
   while (!quit) {
+<<<<<<< HEAD
     switch (currentState) {
       case STATE_MENU:
         handleMenuEvents(&quit, &currentState);
@@ -35,9 +37,6 @@ int main() {
         quit = 1;
         break;
     }
-
-    SDL_Delay(16);
-  }
 
   closeSDL();
   return 0;
