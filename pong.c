@@ -20,13 +20,6 @@ int main() {
 
   initGame(&p1, &p2, &ball);
 
-  //  while (!quit) {
-  //    handleEvents(&quit, &p1, &p2);
-  //    update(&p1, &p2, &ball, &scoreP1, &scoreP2);
-  //    render(&p1, &p2, &ball, scoreP1, scoreP2);
-  //    SDL_Delay(16);
-  //  }
-
   while (!quit) {
     switch (currentState) {
       case STATE_MENU:
