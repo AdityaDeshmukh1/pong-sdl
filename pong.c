@@ -101,9 +101,9 @@ int main() {
     }
     SDL_Delay(16);
   }
-  // if (server_conn.sockfd) close_connection(server_conn);
-  // if (client_conn.sockfd) close_connection(client_conn);
-  // if (multiplayer_conn.sockfd) close_connection(multiplayer_conn);
+  if (server_conn.sockfd) close_connection(server_conn);
+  if (client_conn.sockfd) close_connection(client_conn);
+  if (multiplayer_conn.sockfd) close_connection(multiplayer_conn);
   closeSDL();
   return 0;
 
