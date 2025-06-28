@@ -41,13 +41,13 @@ sudo pacman -S sdl2 sdl2_ttf
 
 Clone the repository:
 ```bash
-git clone https://github.com/yourname/pong-sdl.git
+git clone https://github.com/AdityaDeshmukh1/pong-sdl.git
 cd pong-sdl
 ```
 
 Compile the game:
 ```bash
-gcc -o pong main.c network.c init.c game.c render.c input.c menu.c ai.c -lSDL2 -lSDL2_ttf
+make
 ```
 
 ---
@@ -112,7 +112,7 @@ Make sure both machines are connected to the same Wi-Fi or LAN network and firew
 
 ## 📜 License
 
-MIT License (or your preferred license)
+MIT License 
 
 ---
 
