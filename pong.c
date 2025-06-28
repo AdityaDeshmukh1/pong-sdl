@@ -15,16 +15,26 @@ int main() {
     return 1;
 
   GameState currentState = STATE_PLAYING_MULTIPLAYER_CLIENT;
+  // GameState currentState = STATE_PLAYING_MULTIPLAYER_HOST;
   Paddle p1, p2;
   Ball ball;
   bool quit  = false;
   int scoreP1 = 0, scoreP2 = 0;
 
-  NetworkConnection server_conn;
-  NetworkConnection client_conn;
-  NetworkConnection multiplayer_conn;
+  NetworkConnection server_conn = {0};
+  NetworkConnection client_conn = {0};
+  NetworkConnection multiplayer_conn = {0};
 
   initGame(&p1, &p2, &ball);
+
+  if (currentState == STATE_PLAYING_MULTIPLAYER_HOST) {
+    server_conn = create_server(8080);
+    multiplayer_conn.sockfd = 0;  // explicitly clear it
+  }
+
+  if (currentState == STATE_PLAYING_MULTIPLAYER_CLIENT) {
+    client_conn = connect_to_server("192.168.0.113", 8080);
+  }
 
   while (!quit) {
     switch (currentState) {
@@ -91,9 +101,9 @@ int main() {
     }
     SDL_Delay(16);
   }
-  if (server_conn.sockfd) close_connection(server_conn);
-  if (client_conn.sockfd) close_connection(client_conn);
-  if (multiplayer_conn.sockfd) close_connection(multiplayer_conn);
+  // if (server_conn.sockfd) close_connection(server_conn);
+  // if (client_conn.sockfd) close_connection(client_conn);
+  // if (multiplayer_conn.sockfd) close_connection(multiplayer_conn);
   closeSDL();
   return 0;
 
