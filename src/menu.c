@@ -6,6 +6,8 @@
 MenuOption menuOptions[NUM_OPTIONS] = {
   {"Single-Player", STATE_PLAYING_1P},
   {"Two-Player", STATE_PLAYING_2P},
+  {"Multiplayer Host", STATE_PLAYING_MULTIPLAYER_HOST},
+  {"Multiplayer Client", STATE_PLAYING_MULTIPLAYER_CLIENT},
   {"Quit Game", STATE_QUIT}
 };
 

@@ -26,8 +26,6 @@ int main() {
     int scoreP2;
   };
 
-  GameState currentState = STATE_PLAYING_MULTIPLAYER_CLIENT;
-  // GameState currentState = STATE_PLAYING_MULTIPLAYER_HOST;
   Paddle p1, p2;
   Ball ball;
   bool quit  = false;
@@ -37,16 +35,10 @@ int main() {
   NetworkConnection client_conn = {0};
   NetworkConnection multiplayer_conn = {0};
 
+  GameState currentState = STATE_MENU;
+  int SERVER_FLAG = 0, CLIENT_FLAG = 0;
+
   initGame(&p1, &p2, &ball);
-
-  if (currentState == STATE_PLAYING_MULTIPLAYER_HOST) {
-    server_conn = create_server(8080);
-    multiplayer_conn.sockfd = 0;  // explicitly clear it
-  }
-
-  if (currentState == STATE_PLAYING_MULTIPLAYER_CLIENT) {
-    client_conn = connect_to_server("192.168.0.113", 8080);
-  }
 
   while (!quit) {
     switch (currentState) {
@@ -68,57 +60,70 @@ int main() {
 
       case STATE_PLAYING_MULTIPLAYER_HOST:
         {
-          // Accept client if not already connected
-          if (multiplayer_conn.sockfd == 0) {
-            multiplayer_conn = accept_client(server_conn);
+          // Create Server 
+          if (!SERVER_FLAG) {
+            server_conn = create_server(8080);
+            multiplayer_conn.sockfd = 0;  // explicitly clear it
+            SERVER_FLAG = 1;
+          } else {
+            // Accept client if not already connected
+            if (multiplayer_conn.sockfd == 0) {
+              multiplayer_conn = accept_client(server_conn);
+            }
+
+            // Receive input from client (p2.y)
+            struct InputPacket input;
+            receive_data(multiplayer_conn, &input, sizeof(input));
+            p2.y = input.paddleY;
+
+            // Host handles its own paddle and ball updates
+            handleEvents(&quit, &p1, NULL); // Moves p1 with local input, p2 already set from client
+            update(&p1, &p2, &ball, &scoreP1, &scoreP2);
+
+            // Prepare updated game state packet
+            struct GameStatePacket packet = { p1, p2, ball, scoreP1, scoreP2 };
+
+            // Send full updated game state to client
+            send_data(multiplayer_conn, &packet, sizeof(packet));
+
+            // Render host view
+            render(&p1, &p2, &ball, scoreP1, scoreP2);
+
           }
-
-          // Receive input from client (p2.y)
-          struct InputPacket input;
-          receive_data(multiplayer_conn, &input, sizeof(input));
-          p2.y = input.paddleY;
-
-          // Host handles its own paddle and ball updates
-          handleEvents(&quit, &p1, NULL); // Moves p1 with local input, p2 already set from client
-          update(&p1, &p2, &ball, &scoreP1, &scoreP2);
-
-          // Prepare updated game state packet
-          struct GameStatePacket packet = { p1, p2, ball, scoreP1, scoreP2 };
-
-          // Send full updated game state to client
-          send_data(multiplayer_conn, &packet, sizeof(packet));
-
-          // Render host view
-          render(&p1, &p2, &ball, scoreP1, scoreP2);
         }
         break;
 
       case STATE_PLAYING_MULTIPLAYER_CLIENT:
         {
-          // Handle local paddle input (for p2 only)
-          handleEvents(&quit, NULL, &p2);
+          if (!CLIENT_FLAG) {
+            client_conn = connect_to_server("192.168.0.113", 8080);
+            CLIENT_FLAG = 1;
+          } else {
+            // Handle local paddle input (for p2 only)
+            handleEvents(&quit, NULL, &p2);
 
-          // Send p2.y to server via InputPacket
-          struct InputPacket input = { p2.y };
-          send_data(client_conn, &input, sizeof(input));
+            // Send p2.y to server via InputPacket
+            struct InputPacket input = { p2.y };
+            send_data(client_conn, &input, sizeof(input));
 
-          // Receive updated game state from host
-          struct GameStatePacket recv_packet;
-          receive_data(client_conn, &recv_packet, sizeof(recv_packet));
+            // Receive updated game state from host
+            struct GameStatePacket recv_packet;
+            receive_data(client_conn, &recv_packet, sizeof(recv_packet));
 
-          // Update received game state
-          p1 = recv_packet.p1;
-          ball = recv_packet.ball;
-          scoreP1 = recv_packet.scoreP1;
-          scoreP2 = recv_packet.scoreP2;
+            // Update received game state
+            p1 = recv_packet.p1;
+            ball = recv_packet.ball;
+            scoreP1 = recv_packet.scoreP1;
+            scoreP2 = recv_packet.scoreP2;
 
-          // Do NOT overwrite p2 — client controls p2 locally
+            // Do NOT overwrite p2 — client controls p2 locally
 
-          // Render client view
-          render(&p1, &p2, &ball, scoreP1, scoreP2);
+            // Render client view
+            render(&p1, &p2, &ball, scoreP1, scoreP2);
+          }
         }
         break;
-     case STATE_QUIT:
+      case STATE_QUIT:
         quit = 1;
         break;
     }
