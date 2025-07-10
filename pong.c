@@ -2,33 +2,33 @@
 #include <SDL2/SDL_ttf.h>
 #include <stdbool.h>
 
-#include "include/init.h"
+#include "include/ai.h"
 #include "include/game.h"
-#include "include/render.h"
+#include "include/init.h"
 #include "include/input.h"
 #include "include/menu.h"
-#include "include/ai.h"
 #include "include/network.h"
+#include "include/render.h"
+
+struct InputPacket {
+  int paddleY;
+};
+
+struct GameStatePacket {
+  Paddle p1;
+  Paddle p2;
+  Ball ball;
+  int scoreP1;
+  int scoreP2;
+};
 
 int main() {
   if (!init())
     return 1;
 
-  struct InputPacket {
-    int paddleY;
-  };
-
-  struct GameStatePacket {
-    Paddle p1;
-    Paddle p2;
-    Ball ball;
-    int scoreP1;
-    int scoreP2;
-  };
-
   Paddle p1, p2;
   Ball ball;
-  bool quit  = false;
+  bool quit = false;
   int scoreP1 = 0, scoreP2 = 0;
 
   NetworkConnection server_conn = {0};
@@ -42,97 +42,119 @@ int main() {
 
   while (!quit) {
     switch (currentState) {
-      case STATE_MENU:
-        handleMenuEvents(&quit, &currentState);
-        renderMenu();
-        break;
-      case STATE_PLAYING_1P:
-        updateAIPaddle(&p2, &ball);
-        handleEvents(&quit, &p1, &p2);
-        update(&p1, &p2, &ball, &scoreP1, &scoreP2);
-        render(&p1, &p2, &ball, scoreP1, scoreP2);
-        break;
-      case STATE_PLAYING_2P:
-        handleEvents(&quit, &p1, &p2);
-        update(&p1, &p2, &ball, &scoreP1, &scoreP2);
-        render(&p1, &p2, &ball, scoreP1, scoreP2);
-        break;
+    case STATE_MENU:
+      handleMenuEvents(&quit, &currentState);
+      renderMenu();
+      break;
 
-      case STATE_PLAYING_MULTIPLAYER_HOST:
-        {
-          // Create Server 
-          if (!SERVER_FLAG) {
-            server_conn = create_server(8080);
-            multiplayer_conn.sockfd = 0;  // explicitly clear it
-            SERVER_FLAG = 1;
-          } else {
-            // Accept client if not already connected
-            if (multiplayer_conn.sockfd == 0) {
-              multiplayer_conn = accept_client(server_conn);
-            }
+    case STATE_PLAYING_1P:
+      updateAIPaddle(&p2, &ball);
+      handleEvents(&quit, &p1, &p2);
+      update(&p1, &p2, &ball, &scoreP1, &scoreP2);
+      render(&p1, &p2, &ball, scoreP1, scoreP2);
+      break;
 
-            // Receive input from client (p2.y)
-            struct InputPacket input;
-            receive_data(multiplayer_conn, &input, sizeof(input));
-            p2.y = input.paddleY;
+    case STATE_PLAYING_2P:
+      handleEvents(&quit, &p1, &p2);
+      update(&p1, &p2, &ball, &scoreP1, &scoreP2);
+      render(&p1, &p2, &ball, scoreP1, scoreP2);
+      break;
 
-            // Host handles its own paddle and ball updates
-            handleEvents(&quit, &p1, NULL); // Moves p1 with local input, p2 already set from client
-            update(&p1, &p2, &ball, &scoreP1, &scoreP2);
+    case STATE_PLAYING_MULTIPLAYER_HOST: {
+      // Create Server
+      if (!SERVER_FLAG) {
+        server_conn = create_server(8080);
+        SERVER_FLAG = 1;
+      }
 
-            // Prepare updated game state packet
-            struct GameStatePacket packet = { p1, p2, ball, scoreP1, scoreP2 };
+      struct InputPacket input;
+      struct sockaddr_in client_addr;
+      socklen_t addr_len = sizeof(client_addr);
 
-            // Send full updated game state to client
-            send_data(multiplayer_conn, &packet, sizeof(packet));
+      // Non-blocking check for data from client
+      int bytes_received =
+          recvfrom(server_conn.sockfd, &input, sizeof(input), MSG_DONTWAIT,
+                   (struct sockaddr *)&client_addr, &addr_len);
 
-            // Render host view
-            render(&p1, &p2, &ball, scoreP1, scoreP2);
+      if (bytes_received > 0) {
+        // Update p2 position from client input
+        p2.y = input.paddleY;
+        multiplayer_conn.sockfd = server_conn.sockfd; // Reuse same socket
+        multiplayer_conn.addr = client_addr;          // Store client's address
+      }
 
-          }
-        }
-        break;
+      // Host handles its own paddle and ball updates
+      handleEvents(&quit, &p1, NULL); // Moves p1 with local input
+      update(&p1, &p2, &ball, &scoreP1, &scoreP2);
 
-      case STATE_PLAYING_MULTIPLAYER_CLIENT:
-        {
-          if (!CLIENT_FLAG) {
-            client_conn = connect_to_server("192.168.0.113", 8080);
-            CLIENT_FLAG = 1;
-          } else {
-            // Handle local paddle input (for p2 only)
-            handleEvents(&quit, NULL, &p2);
+      // Prepare updated game state packet
+      struct GameStatePacket packet = {p1, p2, ball, scoreP1, scoreP2};
 
-            // Send p2.y to server via InputPacket
-            struct InputPacket input = { p2.y };
-            send_data(client_conn, &input, sizeof(input));
+      // Send game state back to client (if connected)
+      if (bytes_received > 0) {
+        sendto(server_conn.sockfd, &packet, sizeof(packet), 0,
+               (struct sockaddr *)&client_addr, addr_len);
+      }
 
-            // Receive updated game state from host
-            struct GameStatePacket recv_packet;
-            receive_data(client_conn, &recv_packet, sizeof(recv_packet));
+      // Render host view
+      render(&p1, &p2, &ball, scoreP1, scoreP2);
+    } break;
 
-            // Update received game state
-            p1 = recv_packet.p1;
-            ball = recv_packet.ball;
-            scoreP1 = recv_packet.scoreP1;
-            scoreP2 = recv_packet.scoreP2;
+    case STATE_PLAYING_MULTIPLAYER_CLIENT: {
+      if (!CLIENT_FLAG) {
+        client_conn = connect_to_server("192.168.0.118", 8080);
+        CLIENT_FLAG = 1;
+      }
 
-            // Do NOT overwrite p2 — client controls p2 locally
+      // Handle local paddle input (for p2 only)
+      handleEvents(&quit, NULL, &p2);
 
-            // Render client view
-            render(&p1, &p2, &ball, scoreP1, scoreP2);
-          }
-        }
-        break;
-      case STATE_QUIT:
-        quit = 1;
-        break;
+      // Send p2.y to server via InputPacket
+      struct InputPacket input = {p2.y};
+      int sent_bytes = sendto(client_conn.sockfd, &input, sizeof(input), 0,
+                              (struct sockaddr *)&client_conn.addr,
+                              sizeof(client_conn.addr));
+      if (sent_bytes < 0) {
+        perror("[ERROR] sendto failed");
+      }
+
+      // Receive updated game state from host
+      struct GameStatePacket recv_packet;
+      struct sockaddr_in server_addr;
+      socklen_t addr_len = sizeof(server_addr);
+
+      int bytes_received =
+          recvfrom(client_conn.sockfd, &recv_packet, sizeof(recv_packet), 0,
+                   (struct sockaddr *)&server_addr, &addr_len);
+      if (bytes_received < 0) {
+        perror("[ERROR] recvfrom failed");
+      } else {
+        // Update received game state
+        p1 = recv_packet.p1;
+        ball = recv_packet.ball;
+        scoreP1 = recv_packet.scoreP1;
+        scoreP2 = recv_packet.scoreP2;
+      }
+
+      // Render client view
+      render(&p1, &p2, &ball, scoreP1, scoreP2);
+    } break;
+    case STATE_QUIT:
+      quit = 1;
+      break;
     }
-    SDL_Delay(16);
+
+    SDL_Delay(16); // Delay after every frame
   }
-  if (server_conn.sockfd) close_connection(server_conn);
-  if (client_conn.sockfd) close_connection(client_conn);
-  if (multiplayer_conn.sockfd) close_connection(multiplayer_conn);
+
+  // Clean up sockets and SDL subsystems after game loop ends
+  if (server_conn.sockfd)
+    close_connection(server_conn);
+  if (client_conn.sockfd)
+    close_connection(client_conn);
+  if (multiplayer_conn.sockfd)
+    close_connection(multiplayer_conn);
+
   closeSDL();
   return 0;
-
 }

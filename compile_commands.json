@@ -1,0 +1,20 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-I/usr/include/SDL2",
+      "-D_GNU_SOURCE=1",
+      "-D_REENTRANT",
+      "-Iinclude",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "-o",
+      "pong.o",
+      "pong.c"
+    ],
+    "directory": "/home/adi-gnome/Personal/Systems-Study/projects/pong-sdl",
+    "file": "/home/adi-gnome/Personal/Systems-Study/projects/pong-sdl/pong.c",
+    "output": "/home/adi-gnome/Personal/Systems-Study/projects/pong-sdl/pong.o"
+  }
+]
