@@ -47,7 +47,7 @@ Compile the game:
 make
 ```
 
-## 📈 Next Planned Features
+## Next Planned Features
 
 - [ ] **Implement non-blocking sockets** using `fcntl()` or `select()` for smoother real-time multiplayer  
 - [ ] **Improve AI opponent behavior**
@@ -58,9 +58,7 @@ make
 - [ ] **Frame-rate independent physics**
 - [ ] **Network lag compensation / interpolation**
 
----
-
-## 📖 Learnings / Concepts Covered
+## Learnings / Concepts Covered
 
 - SDL2 rendering, input handling, and text rendering  
 - Structuring a C project with modular `.c` and `.h` files  
@@ -69,15 +67,11 @@ make
 - Debugging low-level networking issues (bad file descriptors, blocking calls, connection resets)  
 - System-level debugging tools (`ip addr`, `ping`, `ss`, `ufw`, `firewalld`)  
 
----
-
-## 📜 License
+## License
 
 MIT License 
 
----
-
-## 📣 Author
+## Author
 
 Aditya Deshmukh  
 *Systems Programming, Networking, and Game Programming Enthusiast*
