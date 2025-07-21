@@ -2,9 +2,8 @@
 
 A simple classic Pong game built in C using SDL2 and SDL2_ttf, featuring local multiplayer over LAN using TCP sockets.
 
----
 
-## 📌 Features
+## Features
 
 - Single-player mode against AI
 - Local multiplayer on the same machine
@@ -12,9 +11,8 @@ A simple classic Pong game built in C using SDL2 and SDL2_ttf, featuring local m
 - Real-time ball and paddle physics
 - SDL2-based rendering, input handling, and text display
 
----
 
-## 📦 Dependencies
+## Dependencies
 
 Tested on **Linux** (Fedora/Ubuntu/Arch)
 
@@ -35,9 +33,8 @@ sudo dnf install SDL2-devel SDL2_ttf-devel
 sudo pacman -S sdl2 sdl2_ttf
 ```
 
----
 
-## 🔧 Build Instructions
+## Build Instructions
 
 Clone the repository:
 ```bash
@@ -50,46 +47,10 @@ Compile the game:
 make
 ```
 
----
-
-## 🎮 Running the Game
-
-### Single-player:
-```bash
-./pong
-```
-
----
-
-### LAN Multiplayer:
-
-#### 1️⃣ On the Host Laptop:
-```bash
-./pong_serv
-```
-
-#### 2️⃣ On the Client Laptop (replace `<host_ip>` with actual IP):
-```bash
-./pong_client <host_ip>
-```
-
-Get the host IP by running:
-```bash
-ip addr show
-```
-and looking for your active interface's `inet` address (like `192.168.0.45`)
-
-**Note:**  
-Make sure both machines are connected to the same Wi-Fi or LAN network and firewall ports are open for TCP port `8080`.
-
----
-
 ## 📈 Next Planned Features
 
-- [ ] **Decouple input and game state packets** to fix paddle desync and reduce network lag  
 - [ ] **Implement non-blocking sockets** using `fcntl()` or `select()` for smoother real-time multiplayer  
 - [ ] **Improve AI opponent behavior**
-- [ ] **Add menu option for multiplayer IP and port entry**
 - [ ] **Add latency/ping display on screen**
 - [ ] **Optional sound effects with SDL2_mixer**
 - [ ] **Add support for multiple clients (expand to 2v2 or spectators)**
